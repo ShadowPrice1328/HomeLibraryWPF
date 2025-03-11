@@ -19,6 +19,7 @@
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Padding" Value="5"></Setter>
             <Setter Property="Margin" Value="5"></Setter>
+            <Setter Property="Cursor" Value="Hand"></Setter>
         </Style>
         <Style TargetType="Label" x:Key="SubTitle">
             <Setter Property="FontSize" Value="16"></Setter>
@@ -48,6 +49,8 @@
             <Setter Property="FontFamily" Value="Bahnschrift Serif"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Margin" Value="50 0 0 0"></Setter>
+            <Setter Property="Background" Value="Transparent"></Setter>
+            <Setter Property="Padding" Value="2"></Setter>
         </Style>
         <Style TargetType="TextBox" x:Key="BookName">
             <Setter Property="Margin" Value="5"></Setter>
@@ -55,6 +58,10 @@
             <Setter Property="FontSize" Value="14"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Padding" Value="3"></Setter>
+            <Setter Property="Background" Value="Transparent"></Setter>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent"></Setter>
         </Style>
         <Style TargetType="ListBox" x:Key="lbxSource">
             <Setter Property="Margin" Value="50 5 0 0"></Setter>
@@ -62,8 +69,12 @@
             <Setter Property="FontSize" Value="12"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Padding" Value="2"></Setter>
+            <Setter Property="Background" Value="Transparent"></Setter>
         </Style>
     </Window.Resources>
+    <Window.Background>
+        <ImageBrush ImageSource="/Images/paper.jpg" Stretch="UniformToFill"/>
+    </Window.Background>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1.2*"></RowDefinition>
@@ -163,11 +174,11 @@
                 Content="Remove"
                 HorizontalAlignment="Right"
                 Margin="0 0 50 0"
-                Background="Red">
+                Background="#ff9c9c">
         </Button>
         <Button Grid.Row="7" Grid.Column="2"
                 Content="Save"
-                Background="RoyalBlue"
+                Background="#a5d3e8"
                 HorizontalAlignment="Right"
                 Margin="0 0 5 0">
         </Button>
