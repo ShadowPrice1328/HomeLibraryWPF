@@ -57,6 +57,9 @@
             <Setter Property="Margin" Value="5"></Setter>
         </Style>
     </Window.Resources>
+    <Window.Background>
+        <ImageBrush ImageSource="/Images/paper.jpg" Stretch="UniformToFill"/>
+    </Window.Background>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="0.2*"></RowDefinition>
