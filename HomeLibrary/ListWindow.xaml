@@ -9,7 +9,7 @@
         ResizeMode="CanMinimize">
     <Window.Resources>
         <Style TargetType="Label" x:Key="TitleText">
-            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontSize" Value="22"/>
             <Setter Property="FontFamily" Value="Bahnschrift Serif"/>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
         </Style>
@@ -45,7 +45,7 @@
             <Setter Property="Padding" Value="5"></Setter>
         </Style>
         <Style TargetType="CheckBox" x:Key="basicCheckbox">
-            <Setter Property="Margin" Value="0 -2 0 0"></Setter>
+            <Setter Property="Margin" Value="0 -2 5 0"></Setter>
             <Setter Property="Padding" Value="5"></Setter>
             <Setter Property="FontFamily" Value="Bahnschrift Light"></Setter>
             <Setter Property="FontSize" Value="12"></Setter>
@@ -55,6 +55,9 @@
         <Style TargetType="ScrollViewer">
             <Setter Property="Padding" Value="5"></Setter>
             <Setter Property="Margin" Value="5"></Setter>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Margin" Value="3"></Setter>
         </Style>
     </Window.Resources>
     <Window.Background>
@@ -82,12 +85,13 @@
         <Label Grid.Row="1" Grid.Column="3"
                HorizontalAlignment="Right"
                Content="Total:"
-               Style="{StaticResource ResourceKey=TitleText}"></Label>
+               Style="{StaticResource ResourceKey=TitleText}"
+               FontSize="20"></Label>
         <TextBox Grid.Row="2" Grid.Column="1"
                  Name="tbSearch"
                  Style="{StaticResource Search}"
                  Text="Search..."
-                 Foreground="SlateGray">
+                 Background="Transparent">
         </TextBox>
         <Expander Grid.Row="2" Grid.Column="2" Grid.RowSpan="2"
               Header="Sort by"
@@ -104,7 +108,7 @@
         <CheckBox Grid.Row="2" Grid.Column="3"
                   Name="chbShowLent"
                   IsChecked="True"
-                  Content="Show lent"
+                  Content="Show lent books"
                   Style="{StaticResource basicCheckbox}">
         </CheckBox>
         <ScrollViewer Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" HorizontalScrollBarVisibility="Auto">
@@ -125,7 +129,8 @@
                 Style="{StaticResource ResourceKey=BasicBorder}">
         </Border>
         <Button Grid.Column="1" Grid.Row="4"
-                Content="Back">
+                Content="Back"
+                Background="WhiteSmoke">
         </Button>
         <Button Grid.Column="2" Grid.Row="4"
                 Content="Add"
