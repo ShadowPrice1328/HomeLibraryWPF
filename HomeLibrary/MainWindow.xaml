@@ -5,8 +5,93 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HomeLibrary"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Home Library" Height="400" Width="600" MinWidth="500" MinHeight="350">
+    <Window.Resources>
+        <Style TargetType="Label" x:Key="TitleText">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontFamily" Value="Bahnschrift Serif"/>
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
+        </Style>
+        <Style TargetType="Border" x:Key="BasicBorder">
+            <Setter Property="BorderBrush" Value="Gray"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+            <Setter Property="Margin" Value="5"></Setter>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="FontSize" Value="14"></Setter>
+            <Setter Property="FontFamily" Value="Bahnschrift Serif"></Setter>
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
+        </Style>
+        <Style TargetType="Label" x:Key="SubTitle">
+            <Setter Property="FontSize" Value="16"></Setter>
+            <Setter Property="FontFamily" Value="Bahnschrift Serif"></Setter>
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
+            <Setter Property="HorizontalAlignment" Value="Center"></Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.2*"></RowDefinition>
+            <RowDefinition Height="1*"></RowDefinition>
+            <RowDefinition Height="1*"></RowDefinition>
+            <RowDefinition Height="4*"></RowDefinition>
+            <RowDefinition Height="1.2*"></RowDefinition>
+            <RowDefinition Height="0.5*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.3*"></ColumnDefinition>
+            <ColumnDefinition Width="10*"></ColumnDefinition>
+            <ColumnDefinition Width="0.3*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
 
+        <Label Grid.Row="1" Grid.Column="1" 
+               Content="Welcome, Anna" 
+               Style="{StaticResource ResourceKey=TitleText}"></Label>
+        <Label Grid.Row="1" Grid.Column="1"
+               HorizontalAlignment="Right"
+               Content="Total:"
+               Style="{StaticResource ResourceKey=TitleText}"></Label>
+        <Border Grid.Row="2" Grid.RowSpan="3"
+                Grid.Column="1"
+                Style="{StaticResource ResourceKey=BasicBorder}">
+        </Border>
+        <Label Grid.Row="3" Grid.Column="1"
+               Content="Recently added books"
+               Style="{StaticResource SubTitle}"
+               VerticalAlignment="Top"></Label>
+        <StackPanel Grid.Row="3" Grid.Column="1"
+                    Orientation="Horizontal"
+                    Margin="36"
+                    HorizontalAlignment="Center">
+            <Border Style="{StaticResource ResourceKey=BasicBorder}">
+                <Viewbox Stretch="Uniform">
+                    <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150"/>
+                </Viewbox>
+            </Border>
+            <Border Style="{StaticResource ResourceKey=BasicBorder}">
+                <Viewbox Stretch="Uniform">
+                    <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150"/>
+                </Viewbox>
+            </Border>
+            <Border Style="{StaticResource ResourceKey=BasicBorder}">
+                <Viewbox Stretch="Uniform">
+                    <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150"/>
+                </Viewbox>
+            </Border>
+            <Border Style="{StaticResource ResourceKey=BasicBorder}">
+                <Viewbox Stretch="Uniform">
+                    <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150"/>
+                </Viewbox>
+            </Border>
+            <Border Style="{StaticResource ResourceKey=BasicBorder}">
+                <Viewbox Stretch="Uniform">
+                    <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150"/>
+                </Viewbox>
+            </Border>
+        </StackPanel>
+        <Button Grid.Row="4" Grid.Column="1" 
+                Margin="100 0 100 10"
+                Padding="5"
+                Content="Show all"></Button>
     </Grid>
 </Window>
