@@ -56,6 +56,13 @@
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Padding" Value="3"></Setter>
         </Style>
+        <Style TargetType="ListBox" x:Key="lbxSource">
+            <Setter Property="Margin" Value="50 5 0 0"></Setter>
+            <Setter Property="FontFamily" Value="Bahnschrift Light"></Setter>
+            <Setter Property="FontSize" Value="12"></Setter>
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
+            <Setter Property="Padding" Value="2"></Setter>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -102,7 +109,18 @@
         <Border Grid.Row="6" Grid.Column="2"
                 Style="{StaticResource BasicBorder}"></Border>
 
-        <CheckBox Grid.Row="1" Grid.Column="2"
+        <Label Grid.Row="1" Grid.Column="2"
+                  Content="Source: "
+               Style="{StaticResource Property}"></Label>
+        <ListBox Grid.Row="1" Grid.Column="2"
+               Name="lbxSource"
+                 Style="{StaticResource lbxSource}">
+            <ListBoxItem Content="Purchased"></ListBoxItem>
+            <ListBoxItem Content="Borrowed"></ListBoxItem>
+            <ListBoxItem Content="Gift"></ListBoxItem>
+        </ListBox>
+
+        <CheckBox Grid.Row="0" Grid.Column="2"
                   Content="Lent"></CheckBox>
         <Label Grid.Row="2" Grid.Column="2"
                   Content="Author: "
