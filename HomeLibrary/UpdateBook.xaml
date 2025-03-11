@@ -160,6 +160,12 @@
                 Content="Back">
         </Button>
         <Button Grid.Row="7" Grid.Column="2"
+                Content="Remove"
+                HorizontalAlignment="Right"
+                Margin="0 0 50 0"
+                Background="Red">
+        </Button>
+        <Button Grid.Row="7" Grid.Column="2"
                 Content="Save"
                 Background="RoyalBlue"
                 HorizontalAlignment="Right"
