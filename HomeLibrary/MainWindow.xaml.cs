@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using HomeLibrary.Model;
+using HomeLibrary.Repositories;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +21,17 @@ namespace HomeLibrary
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var repository = new BookRepository();
+            List<Book> books = repository.ReadBooks();
+            foreach (var book in books)
+            {
+                Console.WriteLine($"Book: {book.Title}, AuthorIds: {string.Join(",", book.AuthorIds)}");
+            }
+
         }
     }
 }

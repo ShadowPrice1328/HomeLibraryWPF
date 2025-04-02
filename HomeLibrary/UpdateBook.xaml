@@ -174,13 +174,13 @@
                 Content="Remove"
                 HorizontalAlignment="Right"
                 Margin="0 0 50 0"
-                Background="#ff9c9c">
+                Background="#ff9c9c" Click="Button_Click_1">
         </Button>
         <Button Grid.Row="7" Grid.Column="2"
                 Content="Save"
                 Background="#a5d3e8"
                 HorizontalAlignment="Right"
-                Margin="0 0 5 0">
+                Margin="0 0 5 0" Click="Button_Click">
         </Button>
     </Grid>
 </Window>

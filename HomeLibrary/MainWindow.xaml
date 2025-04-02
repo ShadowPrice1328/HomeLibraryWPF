@@ -110,6 +110,6 @@
         </StackPanel>
         <Button Grid.Row="4" Grid.Column="1" 
                 Margin="100 0 100 10"
-                Content="Show all"></Button>
+                Content="Show all" Click="Button_Click"></Button>
     </Grid>
 </Window>
