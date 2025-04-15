@@ -211,7 +211,25 @@ namespace HomeLibrary.Repositories
             }
         }
 
+        public int GetBookId(string bookTitle, string description)
+        {
+            int bookId;
 
+            using (SqlConnection conn = _dbConnection.GetConnection())
+            {
+                conn.Open();
+                string query = "SELECT ID_Book FROM Books WHERE Name = @Title AND Description = @Description";
+                using (SqlCommand cmd = new(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Title", bookTitle);
+                    cmd.Parameters.AddWithValue("@Description", description);
+
+                    bookId = (int)cmd.ExecuteScalar();
+                }
+            }
+
+            return bookId;
+        }
         public Book ReadBook(int id)
         {
             Book? book = null;
@@ -229,15 +247,12 @@ namespace HomeLibrary.Repositories
                             book = new Book
                             {
                                 Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Year = reader.GetDateTime(2).Year,
-                                Description = reader.GetString(3),
-                                Price = reader.GetDecimal(4),
-                                Publisher = reader.GetString(5),
-                                Title = reader.GetString(6),
-                                Image = reader.GetString(7),
-                                Source = (BookSource)reader.GetInt32(8),
-                                IsLent = reader.GetBoolean(9)
+                                Year = reader.GetDateTime(1).Year,
+                                Description = reader.GetString(2),
+                                Title = reader.GetString(3),
+                                Image = reader.GetString(4),
+                                Source = (BookSource)reader.GetInt32(5),
+                                IsLent = reader.GetBoolean(6)
                             };
                         }
                     }
@@ -245,40 +260,65 @@ namespace HomeLibrary.Repositories
 
                 if (book != null)
                 {
-                    book.AuthorIds = new();
-                    string authorQuery = "SELECT ID_Author FROM Books_Authors WHERE ID_Book = @BookId";
+                    book.Authors = new List<Author>();
+                    string authorQuery = @"
+                            SELECT a.FirstName, a.LastName
+                            FROM Books_Authors ba
+                            INNER JOIN Authors a ON ba.ID_Author = a.ID_Author
+                            WHERE ba.ID_Book = @BookId";
+
                     using (SqlCommand authorCmd = new(authorQuery, conn))
                     {
                         authorCmd.Parameters.AddWithValue("@BookId", id);
+
                         using (SqlDataReader authorReader = authorCmd.ExecuteReader())
                         {
                             while (authorReader.Read())
                             {
-                                book.AuthorIds.Add(authorReader.GetInt32(0));
+                                string firstName = authorReader.GetString(0);
+                                string lastName = authorReader.GetString(1);
+
+                                book.Authors.Add(new Author
+                                {
+                                    FirstName = firstName,
+                                    LastName = lastName
+                                });
                             }
                         }
                     }
 
-                    book.GenreIds = new();
-                    string genreQuery = "SELECT ID_Genre FROM Books_Genres WHERE ID_Book = @BookId";
+                    book.Genres = new List<Genre>();
+                    string genreQuery = @"
+                        SELECT g.Name
+                        FROM Books_Genres bg
+                        INNER JOIN Genres g ON bg.ID_Genre = g.ID_Genre
+                        WHERE bg.ID_Book = @BookId";
+
                     using (SqlCommand genreCmd = new(genreQuery, conn))
                     {
                         genreCmd.Parameters.AddWithValue("@BookId", id);
+
                         using (SqlDataReader genreReader = genreCmd.ExecuteReader())
                         {
                             while (genreReader.Read())
                             {
-                                book.GenreIds.Add(genreReader.GetInt32(0));
+                                string genreName = genreReader.GetString(0);
+
+                                book.Genres.Add(new Genre
+                                {
+                                    Name = genreName
+                                });
                             }
                         }
                     }
+
                 }
             }
             return book;
         }
         public List<Book> ReadBooks()
         {
-            List<Book> books = new List<Book>();
+            List<Book> books = [];
 
             using (SqlConnection conn = _dbConnection.GetConnection())
             {

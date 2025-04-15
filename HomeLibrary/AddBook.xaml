@@ -110,6 +110,7 @@
 
 
         <Label Content="Click to upload"
+               Name="ClickToUploadLabel"
                Grid.Row="1" 
                Grid.RowSpan="6"
                Grid.Column="1"

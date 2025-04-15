@@ -31,7 +31,7 @@ namespace HomeLibrary
             if (MessageBox.Show("Are you sure?", "Confirm Delete", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 var bookRepository = new BookRepository();
-                var book = new Book { Title = lbAuthor.Name };
+                var book = new Book { Title = lbAuthor.Content.ToString() };
 
                 try
                 {
@@ -51,6 +51,20 @@ namespace HomeLibrary
                     MessageBox.Show($"An error occurred: {ex.Message}");
                 }
             }
+        }
+
+        private void btnBack_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+            ListWindow listWindow = new();
+            listWindow.Show();
+        }
+
+        private void btnUpdateBook_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+            UpdateBook updateBook = new UpdateBook();
+            updateBook.Show();
         }
     }
 }

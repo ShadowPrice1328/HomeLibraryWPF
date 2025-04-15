@@ -142,14 +142,14 @@
                  TextWrapping="Wrap"
                  Text="Book description Book description Book description Book description Book description">
         </TextBlock>
-        <Button Grid.Row="7" Grid.Column="1"
-                Content="Back">
+        <Button x:Name="btnBack" Grid.Row="7" Grid.Column="1"
+                Content="Back" Click="btnBack_Click">
         </Button>
-        <Button Grid.Row="7" Grid.Column="2"
+        <Button x:Name="btnUpdateBook" Grid.Row="7" Grid.Column="2"
                 Content="Edit"
                 HorizontalAlignment="Right"
                 Margin="0 0 75 0"
-                Background="#a5d3e8">
+                Background="#a5d3e8" Click="btnUpdateBook_Click">
         </Button>
         <Button x:Name="btnDeleteBook" Grid.Row="7" Grid.Column="2"
                 Content="Remove"
