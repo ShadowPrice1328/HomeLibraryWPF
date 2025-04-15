@@ -97,7 +97,7 @@
         <TextBox Grid.Row="0" Grid.Column="1"
                Text="Book name..." 
                Style="{StaticResource BookName}"
-               Name="tbBookName"></TextBox>
+               Name="tbBookName" LostFocus="tbBookName_LostFocus" GotFocus="tbBookName_GotFocus"/>
 
         <Border Grid.Row="1" Grid.RowSpan="6"
             Grid.Column="1"

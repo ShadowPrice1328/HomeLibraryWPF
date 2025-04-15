@@ -21,14 +21,28 @@ namespace HomeLibrary
     /// </summary>
     public partial class ListWindow : Window
     {
+        private BookRepository _repository;
         public ListWindow()
         {
             InitializeComponent();
+
+            _repository = new BookRepository();
+
+            lbTotal.Content += _repository.GetBooksCount().ToString();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void btnBack_Click(object sender, RoutedEventArgs e)
         {
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
+            Close();
+        }
 
+        private void btnAddBook_Click(object sender, RoutedEventArgs e)
+        {
+            AddBook addBook = new AddBook();
+            addBook.Show();
+            Close();
         }
     }
 }

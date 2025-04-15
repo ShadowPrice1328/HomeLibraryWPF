@@ -82,9 +82,9 @@
         <Label Grid.Row="1" Grid.Column="1" 
                Content="Your library" 
                Style="{StaticResource ResourceKey=TitleText}"></Label>
-        <Label Grid.Row="1" Grid.Column="3"
+        <Label x:Name="lbTotal" Grid.Row="1" Grid.Column="3"
                HorizontalAlignment="Right"
-               Content="Total:"
+               Content="Total: "
                Style="{StaticResource ResourceKey=TitleText}"
                FontSize="20"></Label>
         <TextBox Grid.Row="2" Grid.Column="1"
@@ -128,13 +128,15 @@
                 Grid.Column="1" Grid.ColumnSpan="3"
                 Style="{StaticResource ResourceKey=BasicBorder}">
         </Border>
-        <Button Grid.Column="1" Grid.Row="4"
+        <Button x:Name="btnBack" Grid.Column="1" Grid.Row="4"
                 Content="Back"
-                Background="WhiteSmoke">
+                Background="WhiteSmoke" Click="btnBack_Click"
+                Cursor="Hand">
         </Button>
         <Button x:Name="btnAddBook" Grid.Column="2" Grid.Row="4"
                 Content="Add"
-                Background="DarkSeaGreen" Click="Button_Click">
+                Background="DarkSeaGreen" Click="btnAddBook_Click"
+                Cursor="Hand">
         </Button>
     </Grid>
 </Window>

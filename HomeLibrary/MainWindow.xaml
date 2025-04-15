@@ -64,9 +64,9 @@
         <Label x:Name="lbWelcome" Grid.Row="1" Grid.Column="1" 
                Content="Welcome, " 
                Style="{StaticResource ResourceKey=TitleText}"></Label>
-        <Label Grid.Row="1" Grid.Column="1"
+        <Label x:Name="lbTotal" Grid.Row="1" Grid.Column="1"
                HorizontalAlignment="Right"
-               Content="Total:"
+               Content="Total: "
                Style="{StaticResource ResourceKey=TitleText}"
                FontSize="20"></Label>
         <Border Grid.Row="2" Grid.RowSpan="3"
@@ -79,6 +79,7 @@
                Style="{StaticResource SubTitle}"
                VerticalAlignment="Top"></Label>
         <StackPanel Grid.Row="3" Grid.Column="1"
+                    x:Name="StackPanelRecentBooks"
                     Orientation="Horizontal"
                     Margin="36"
                     HorizontalAlignment="Center">
@@ -108,8 +109,8 @@
                 </Viewbox>
             </Border>
         </StackPanel>
-        <Button Grid.Row="4" Grid.Column="1" 
+        <Button x:Name="btnShowAll" Grid.Row="4" Grid.Column="1" 
                 Margin="100 0 100 10"
-                Content="Show all" Click="Button_Click"></Button>
+                Content="Show all" Click="btnShowAll_Click"></Button>
     </Grid>
 </Window>

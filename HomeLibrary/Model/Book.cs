@@ -9,7 +9,7 @@ namespace HomeLibrary.Model
     /// <summary>
     /// Domain model for Book
     /// </summary>
-    class Book
+    public class Book
     {
         public int Id { get; set; }
         public string? Title { get; set; }

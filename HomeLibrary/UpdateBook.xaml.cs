@@ -126,8 +126,8 @@ namespace HomeLibrary
                     if (bookRepository.DeleteBook(bookTitle))
                     {
                         MessageBox.Show("Book successfully removed!");
-                        Close();
                         new ListWindow().Show();
+                        Close();
                     }
                     else
                     {
@@ -143,8 +143,8 @@ namespace HomeLibrary
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
-            Close();
             new ListWindow().Show();
+            Close();
         }
 
         private void btnUpdateBook_Click(object sender, RoutedEventArgs e)
@@ -191,8 +191,8 @@ namespace HomeLibrary
                 {
                     MessageBox.Show("Book updated successfully!");
 
-                    Close();
                     new ListWindow().Show();
+                    Close();
                 }
                 else
                 {

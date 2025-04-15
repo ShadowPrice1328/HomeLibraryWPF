@@ -54,7 +54,7 @@
             <Setter Property="FontSize" Value="12"></Setter>
             <Setter Property="FontFamily" Value="Bahnschrift Serif"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
-            <Setter Property="Margin" Value="42 0 0 0"></Setter>
+            <Setter Property="Margin" Value="42 5 5 5"></Setter>
         </Style>
 
     </Window.Resources>
@@ -98,23 +98,22 @@
         <Label Grid.Row="1" Grid.Column="2"
                   Content="Source: "
                Style="{StaticResource Property}"></Label>
-        <Label Grid.Row="1" Grid.Column="2"
+        <Label Grid.Column="2"
                Content="Source"
                Name="lbSource"
-               Style="{StaticResource Value}">
-        </Label>
+               Style="{StaticResource Value}" Margin="39,35,9,0" VerticalAlignment="Top" Grid.RowSpan="2" FontSize="14" Height="39"/>
 
-        <CheckBox Grid.Row="0" Grid.Column="2"
+        <CheckBox x:Name="chbxLent" Grid.Row="0" Grid.Column="2"
                   Content="Lent"></CheckBox>
         <Label Grid.Row="2" Grid.Column="2"
                   Content="Author: "
                Style="{StaticResource Property}"></Label>
-        <Label Grid.Row="2" Grid.Column="2"
+        <Label Grid.Row="1" Grid.Column="2"
                Content="Author"
                Name="lbAuthor"
-               Style="{StaticResource Value}">
+               Style="{StaticResource Value}" Margin="43,32,5,0" Grid.RowSpan="2" VerticalAlignment="Top">
         </Label>
-        
+
         <Label Grid.Row="3" Grid.Column="2"
                   Content="Genre:"
                Style="{StaticResource Property}"></Label>
@@ -124,7 +123,7 @@
                Style="{StaticResource Value}"
                Margin="38 0 0 0">
         </Label>
-        
+
         <Label Grid.Row="4" Grid.Column="2"
                   Content="Year:"
                Style="{StaticResource Property}"></Label>
@@ -132,16 +131,14 @@
                Content="Year"
                Name="lbYear"
                Style="{StaticResource Value}"
-               Margin="30 0 0 0">
-        </Label>
-        
+               Margin="26,0,5,0" Height="42" FontSize="16"/>
+
         <Label Grid.Row="5" Grid.Column="2"
                   Content="Description:"
                Style="{StaticResource Property}"></Label>
-        <TextBlock Grid.Row="6" Grid.Column="2"
+        <TextBlock x:Name="txbDescription" Grid.Row="6" Grid.Column="2"
                  TextWrapping="Wrap"
-                 Text="Book description Book description Book description Book description Book description">
-        </TextBlock>
+                 Text="Book description Book description Book description Book description Book description" IsEnabled="False"/>
         <Button x:Name="btnBack" Grid.Row="7" Grid.Column="1"
                 Content="Back" Click="btnBack_Click">
         </Button>

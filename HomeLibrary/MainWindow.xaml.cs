@@ -1,5 +1,6 @@
 ﻿using HomeLibrary.Model;
 using HomeLibrary.Repositories;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,23 +19,66 @@ namespace HomeLibrary
     /// </summary>
     public partial class MainWindow : Window
     {
+        private BookRepository _repository;
         private string _userName = "Anna";
         public MainWindow()
         {
             InitializeComponent();
 
+            _repository = new BookRepository();
+            
             lbWelcome.Content += _userName;
+            lbTotal.Content += _repository.GetBooksCount().ToString();
+
+            LoadRecentBooks();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void LoadRecentBooks()
         {
-            var repository = new BookRepository();
-            //List<Book> books = repository.ReadBooks();
-            //foreach (var book in books)
-            //{
-            //    Console.WriteLine($"Book: {book.Title}, AuthorIds: {string.Join(",", book.AuthorIds)}");
-            //}
+            var recentBooks = _repository.GetLastAddedBooks(5);
 
+            StackPanelRecentBooks.Children.Clear();
+
+            foreach (var book in recentBooks)
+            {
+                if (File.Exists(book.Image))
+                {
+                    var imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, book.Image);
+                    var image = new Image
+                    {
+                        Source = new BitmapImage(new Uri(imagePath, UriKind.Absolute)),
+                        Margin = new Thickness(10),
+                        Width = 75,
+                        Height = 75,
+                        Stretch = Stretch.UniformToFill,
+                        Tag = book
+                    };
+
+                    image.MouseLeftButtonDown += Image_OnClick;
+
+                    StackPanelRecentBooks.Children.Add(image);
+                }
+                else
+                {
+                    MessageBox.Show($"Image not found: {book.Image}");
+                }
+            }
+        }
+
+        private void Image_OnClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Image clickedImage && clickedImage.Tag is Book clickedBook)
+            {
+                new BookInfo(clickedBook).Show();
+                Close();
+            }
+        }
+
+        private void btnShowAll_Click(object sender, RoutedEventArgs e)
+        {
+            ListWindow listWindow = new();
+            listWindow.Show();
+            Close();
         }
     }
 }

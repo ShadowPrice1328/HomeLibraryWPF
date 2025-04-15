@@ -1,6 +1,7 @@
 ﻿using HomeLibrary.Interfaces;
 using HomeLibrary.Model;
 using Microsoft.Data.SqlClient;
+using System.Windows;
 
 namespace HomeLibrary.Repositories
 {
@@ -18,16 +19,21 @@ namespace HomeLibrary.Repositories
                     {
                         int bookExists;
 
-                        string checkBookQuery = "SELECT COUNT(1) FROM Books WHERE Name = @Name";
+                        string checkBookQuery = "SELECT COUNT(1) FROM Books WHERE Title = @Title";
                         using (SqlCommand checkBookCmd = new(checkBookQuery, conn, transaction))
                         {
-                            checkBookCmd.Parameters.AddWithValue("@Name", book.Title);
+                            checkBookCmd.Parameters.AddWithValue("@Title", book.Title);
                             bookExists = (int)checkBookCmd.ExecuteScalar();
                         }
 
-                        if (bookExists == 0)
+                        if (bookExists != 0)
                         {
                             throw new Exception("Book already exists.");
+                        }
+
+                        if (book.Year < 1753)
+                        {
+                            book.Year = 1753; // Defaulting to a valid year due to SQL restriction
                         }
 
                         string query = @"INSERT INTO Books (Year, Description, Title, Image, Source, Lent) 
@@ -39,7 +45,7 @@ namespace HomeLibrary.Repositories
                             cmd.Parameters.AddWithValue("@Description", book.Description);
                             cmd.Parameters.AddWithValue("@Title", book.Title);
                             cmd.Parameters.AddWithValue("@Image", book.Image); // Path to image
-                            cmd.Parameters.AddWithValue("@Source", book.Source);
+                            cmd.Parameters.AddWithValue("@Source", book.Source.ToString());
                             cmd.Parameters.AddWithValue("@Lent", book.IsLent);
 
                             book.Id = (int)cmd.ExecuteScalar();
@@ -50,7 +56,7 @@ namespace HomeLibrary.Repositories
                         {
                             for (int i = 0; i < book.Authors.Count; i++)
                             {
-                                string checkAuthorQuery = "SELECT COUNT(1) FROM Authors WHERE FirstName = @AuthorId AND LastName = @LastName";
+                                string checkAuthorQuery = "SELECT COUNT(1) FROM Authors WHERE FirstName = @FirstName AND LastName = @LastName";
                                 using (SqlCommand checkAuthorCmd = new(checkAuthorQuery, conn, transaction))
                                 {
                                     checkAuthorCmd.Parameters.AddWithValue("@FirstName", book.Authors[i].FirstName);
@@ -61,16 +67,16 @@ namespace HomeLibrary.Repositories
 
                                     if (authorExists == 0)
                                     {
-                                        string insertAuthorQuery = "SET IDENTITY_INSERT Authors ON INSERT INTO Authors (FirstName, LastName) " +
-                                            "OUTPUT INSERTED.ID_Author" +
-                                            "VALUES (@FirstName, @LastName)";
+                                        string insertAuthorQuery = "INSERT INTO Authors (FirstName, LastName) " +
+                                                                   "OUTPUT INSERTED.ID_Author " + 
+                                                                   "VALUES (@FirstName, @LastName);"; 
 
                                         using (SqlCommand insertAuthorCmd = new(insertAuthorQuery, conn, transaction))
                                         {
                                             insertAuthorCmd.Parameters.AddWithValue("@FirstName", book.Authors[i].FirstName);
                                             insertAuthorCmd.Parameters.AddWithValue("@LastName", book.Authors[i].LastName);
 
-                                            authorId = (int)insertAuthorCmd.ExecuteScalar();                                      
+                                            authorId = (int)insertAuthorCmd.ExecuteScalar();
                                         }
                                     }
                                     else
@@ -103,7 +109,7 @@ namespace HomeLibrary.Repositories
                         {
                             for (int i = 0; i < book.Genres.Count; i++)
                             {
-                                string checkGenreQuery = "SELECT COUNT(1) FROM Genre WHERE Name = @Name";
+                                string checkGenreQuery = "SELECT COUNT(1) FROM Genres WHERE Name = @Name";
                                 using (SqlCommand checkGenreCmd = new(checkGenreQuery, conn, transaction))
                                 {
                                     checkGenreCmd.Parameters.AddWithValue("@Name", book.Genres[i].Name);
@@ -113,9 +119,9 @@ namespace HomeLibrary.Repositories
 
                                     if (genreExists == 0)
                                     {
-                                        string insertGenreQuery = "SET IDENTITY_INSERT Genres ON INSERT INTO Genres (Name) " +
-                                            "OUTPUT INSERTED.ID_Genre" +
-                                            "VALUES (@Name)";
+                                        string insertGenreQuery = "INSERT INTO Genres (Name) " +
+                                                                  "OUTPUT INSERTED.ID_Genre " +
+                                                                  "VALUES (@Name)";
 
                                         using (SqlCommand insertGenreCmd = new(insertGenreQuery, conn, transaction))
                                         {
@@ -160,6 +166,93 @@ namespace HomeLibrary.Repositories
                 }
             }
         }
+
+        public List<Book> GetLastAddedBooks(int count = 5)
+        {
+            List<Book> books = new();
+
+            using (SqlConnection conn = _dbConnection.GetConnection())
+            {
+                conn.Open();
+
+                string query = "SELECT TOP (@Number) * FROM Books";
+                using (SqlCommand cmd = new(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Number", count);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Book book = new()
+                            {
+                                Id = reader.GetInt32(0),
+                                Year = reader.GetDateTime(1).Year,
+                                Description = reader.GetString(2),
+                                Title = reader.GetString(3),
+                                Image = reader.GetString(4),
+                                Source = Enum.Parse<BookSource>(reader.GetString(5)),
+                                IsLent = reader.GetBoolean(6),
+                                Authors = [],
+                                Genres = []
+                            };
+                            books.Add(book);
+                        }
+                    }
+                }
+
+                foreach (var book in books)
+                {
+                    string authorQuery = @"
+                        SELECT A.ID_Author, A.FirstName, A.LastName 
+                        FROM Authors A
+                        JOIN Books_Authors BA ON A.ID_Author = BA.ID_Author
+                        WHERE BA.ID_Book = @BookId";
+
+                    using (SqlCommand authorCmd = new(authorQuery, conn))
+                    {
+                        authorCmd.Parameters.AddWithValue("@BookId", book.Id);
+                        using (SqlDataReader authorReader = authorCmd.ExecuteReader())
+                        {
+                            while (authorReader.Read())
+                            {
+                                book.Authors.Add(new Author
+                                {
+                                    Id = authorReader.GetInt32(0),
+                                    FirstName = authorReader.GetString(1),
+                                    LastName = authorReader.GetString(2)
+                                });
+                            }
+                        }
+                    }
+
+                    string genreQuery = @"
+                        SELECT G.ID_Genre, G.Name 
+                        FROM Genres G
+                        JOIN Books_Genres BG ON G.ID_Genre = BG.ID_Genre
+                        WHERE BG.ID_Book = @BookId";
+
+                    using (SqlCommand genreCmd = new(genreQuery, conn))
+                    {
+                        genreCmd.Parameters.AddWithValue("@BookId", book.Id);
+                        using (SqlDataReader genreReader = genreCmd.ExecuteReader())
+                        {
+                            while (genreReader.Read())
+                            {
+                                book.Genres.Add(new Genre
+                                {
+                                    Id = genreReader.GetInt32(0),
+                                    Name = genreReader.GetString(1)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return books;
+        }
+
         public bool DeleteBook(string bookTitle)
         {
             using (SqlConnection conn = _dbConnection.GetConnection())
@@ -169,14 +262,27 @@ namespace HomeLibrary.Repositories
                 {
                     try
                     {
-                        int bookId;
+                        int bookId = 0;
 
-                        string getBookIdQuery = "SELECT ID_Book FROM Books WHERE Name = @Name";
+                        string getBookIdQuery = "SELECT ID_Book FROM Books WHERE Title = @Title";
                         using (SqlCommand getBookIdCmd = new(getBookIdQuery, conn, transaction))
                         {
-                            getBookIdCmd.Parameters.AddWithValue("@Name", bookTitle);
-                            bookId = (int)getBookIdCmd.ExecuteScalar();
+                            getBookIdCmd.Parameters.AddWithValue("@Title", bookTitle);
+
+                            var result = getBookIdCmd.ExecuteScalar();
+
+                            // Перевіряємо, чи результат не є null
+                            if (result != DBNull.Value && result != null)
+                            {
+                                bookId = Convert.ToInt32(result); // Перетворюємо результат в int
+                            }
+                            else
+                            {
+                                // Якщо не знайшли книгу, можна вивести повідомлення або обробити помилку
+                                MessageBox.Show("Book not found.");
+                            }
                         }
+
 
                         string deleteBookAuthorsQuery = "DELETE FROM Books_Authors WHERE ID_Book = @BookId";
                         using (SqlCommand deleteBookAuthorsCmd = new(deleteBookAuthorsQuery, conn, transaction))
@@ -474,6 +580,19 @@ namespace HomeLibrary.Repositories
                         transaction.Rollback();
                         return false;
                     }
+                }
+            }
+        }
+        public int GetBooksCount()
+        {
+            using (SqlConnection conn = _dbConnection.GetConnection())
+            {
+                conn.Open();
+
+                string query = "SELECT COUNT(*) FROM Books";
+                using (SqlCommand cmd = new(query, conn))
+                {
+                    return (int)cmd.ExecuteScalar();
                 }
             }
         }

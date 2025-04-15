@@ -1,4 +1,4 @@
-﻿enum BookSource
+﻿public enum BookSource
 {
     Purchased,
     Borrowed,

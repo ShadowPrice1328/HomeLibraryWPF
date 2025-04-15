@@ -21,9 +21,17 @@ namespace HomeLibrary
     /// </summary>
     public partial class BookInfo : Window
     {
-        public BookInfo()
+        public BookInfo(Book book)
         {
             InitializeComponent();
+
+            lbBookTitle.Content = book.Title;
+            chbxLent.IsEnabled = book.IsLent;
+            lbSource.Content = book.Source;
+            lbAuthor.Content = string.Join("; ", book.Authors.Select(a => a.FirstName + " " + a.LastName));
+            lbGenre.Content = string.Join("; ", book.Genres.Select(g => g.Name));
+            lbYear.Content = book.Year;
+            txbDescription.Text = book.Description;
         }
 
         private void btnDeleteBook_Click(object sender, RoutedEventArgs e)
@@ -31,19 +39,16 @@ namespace HomeLibrary
             if (MessageBox.Show("Are you sure?", "Confirm Delete", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 var bookRepository = new BookRepository();
-                var book = new Book { Title = lbAuthor.Content.ToString() };
+                var book = new Book { Title = lbBookTitle.Content.ToString() };
 
                 try
                 {
                     if (bookRepository.DeleteBook(book.Title))
                     {
-                        Close();
-
                         MessageBox.Show("Book successfully removed!");
 
-                        Close();
-                        ListWindow listWindow = new ListWindow();
-                        listWindow.Show();
+                       new ListWindow().Show();
+                       Close();
                     }
                 }
                 catch (Exception ex)
@@ -55,16 +60,15 @@ namespace HomeLibrary
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
+            new ListWindow().Show();
             Close();
-            ListWindow listWindow = new();
-            listWindow.Show();
+
         }
 
         private void btnUpdateBook_Click(object sender, RoutedEventArgs e)
         {
+            new UpdateBook().Show();
             Close();
-            UpdateBook updateBook = new UpdateBook();
-            updateBook.Show();
         }
     }
 }

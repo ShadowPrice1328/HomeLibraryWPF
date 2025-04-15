@@ -61,72 +61,121 @@ namespace HomeLibrary
                 return;
             }
 
+            if (string.IsNullOrEmpty(tbBookName.Text))
+            {
+                MessageBox.Show("Please enter the book title.");
+                return;
+            }
+
+            if (!int.TryParse(tbxYear.Text, out int year) || year < 1753 || year > DateTime.Now.Year)
+            {
+                MessageBox.Show("Please enter a valid year (between 1753 and the current year).");
+                return;
+            }
+
+            var authors = tbxAuthor.Text.Split(';', StringSplitOptions.TrimEntries);
+            if (authors.Length == 0 || authors.Any(a => a.Split(' ').Length < 2))
+            {
+                MessageBox.Show("Please enter authors in the correct format: 'FirstName LastName'. Separate multiple authors with ';'.");
+                return;
+            }
+
+            var genres = tbxGenre.Text.Split(';', StringSplitOptions.TrimEntries);
+            if (genres.Length == 0 || genres.All(g => string.IsNullOrEmpty(g)))
+            {
+                MessageBox.Show("Please enter at least one genre.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(tbBookDescription.Text.Trim()))
+            {
+                MessageBox.Show("Please enter a book description.");
+                return;
+            }
+
+            if (lbxSource.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a source.");
+                return;
+            }
+
             var repository = new BookRepository();
 
             try
             {
                 string imagePath = SaveImage(userSelectedImagePath);
-                string[] authors = tbxAuthor.Text.Split(';', StringSplitOptions.TrimEntries);
 
-                List<Author> authorList = [];
-
-                for (int i = 0; i < authors.Length; i++)
+                List<Author> authorList = new List<Author>();
+                foreach (var author in authors)
                 {
-                    string[] nameParts = authors[i].Split(' ', StringSplitOptions.TrimEntries);
-
+                    string[] nameParts = author.Split(' ', StringSplitOptions.TrimEntries);
                     if (nameParts.Length >= 2)
                     {
                         string firstName = nameParts[0];
                         string lastName = nameParts[1];
-
                         authorList.Add(new Author { FirstName = firstName, LastName = lastName });
                     }
                     else
                     {
                         MessageBox.Show("Author format is incorrect. Make sure to input both first and last name.");
+                        return;
                     }
                 }
 
-                string[] genres = tbxGenre.Text.Split(';', StringSplitOptions.TrimEntries);
-                List<Genre> genresList = [];
-
-                for (int i = 0; i < genres.Length; i++)
+                List<Genre> genresList = new List<Genre>();
+                foreach (var genre in genres)
                 {
-                    genresList.Add(new Genre { Name = genres[i] });
+                    if (!string.IsNullOrEmpty(genre))
+                    {
+                        genresList.Add(new Genre { Name = genre });
+                    }
                 }
 
-                var newBook = new Book
+                var selectedItem = lbxSource.SelectedItem as ListBoxItem;
+                if (selectedItem != null)
                 {
-                    Title = tbBookName.Text,
-                    Year = int.TryParse(tbxYear.Text, out int year) ? year : throw new FormatException("Year must be a number."),
-                    Description = tbBookDescription.Text,
-                    Image = imagePath,
-                    Source = (BookSource)lbxSource.SelectedItem,
-                    IsLent = (bool)chbxLent.IsChecked,
-                    Authors = authorList,
-                    Genres = genresList
-                };
+                    string selectedSource = selectedItem.Content.ToString();
+                    if (Enum.TryParse(selectedSource, out BookSource source))
+                    {
+                        var newBook = new Book
+                        {
+                            Title = tbBookName.Text,
+                            Year = year,
+                            Description = tbBookDescription.Text,
+                            Image = imagePath,
+                            Source = source,
+                            IsLent = (bool)chbxLent.IsChecked,
+                            Authors = authorList,
+                            Genres = genresList
+                        };
 
-                if (repository.CreateBook(newBook))
-                {
-                    MessageBox.Show("Book added successfully!");
-
-                    Close();
-                    ListWindow listWindow = new();
-                    listWindow.Show();
+                        if (repository.CreateBook(newBook))
+                        {
+                            MessageBox.Show("Book added successfully!");
+                            new ListWindow().Show();
+                            Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("An error occurred! Book already exists or there was an error while saving the data.");
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid source selected.");
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("An error occurred! Try again!");
+                    MessageBox.Show("Please select a source.");
                 }
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred: {ex.Message}");
             }
-
         }
+
 
         private string SaveImage(string sourcePath)
         {
@@ -161,9 +210,18 @@ namespace HomeLibrary
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
+            new ListWindow().Show();
             Close();
-            ListWindow listWindow = new();
-            listWindow.Show();
+        }
+
+        private void tbBookName_LostFocus(object sender, RoutedEventArgs e)
+        {
+            tbBookName.Text = tbBookName.Text == string.Empty ? "Book name..." : tbBookName.Text;
+        }
+
+        private void tbBookName_GotFocus(object sender, RoutedEventArgs e)
+        {
+            tbBookName.Text = tbBookName.Text == "Book name..." ? string.Empty : tbBookName.Text;
         }
     }
 }
