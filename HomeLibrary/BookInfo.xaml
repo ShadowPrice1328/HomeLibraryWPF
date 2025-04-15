@@ -151,11 +151,11 @@
                 Margin="0 0 75 0"
                 Background="#a5d3e8">
         </Button>
-        <Button Grid.Row="7" Grid.Column="2"
+        <Button x:Name="btnDeleteBook" Grid.Row="7" Grid.Column="2"
                 Content="Remove"
                 HorizontalAlignment="Right"
                 Margin="0 0 5 0"
-                Background="#ff9c9c">
+                Background="#ff9c9c" Click="btnDeleteBook_Click">
         </Button>
     </Grid>
 </Window>

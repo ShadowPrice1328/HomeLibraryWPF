@@ -16,7 +16,20 @@ namespace HomeLibrary.Repositories
                 {
                     try
                     {
-                        // TO DO: prevent duplicates
+                        int bookExists;
+
+                        string checkBookQuery = "SELECT COUNT(1) FROM Books WHERE Name = @Name";
+                        using (SqlCommand checkBookCmd = new(checkBookQuery, conn, transaction))
+                        {
+                            checkBookCmd.Parameters.AddWithValue("@Name", book.Title);
+                            bookExists = (int)checkBookCmd.ExecuteScalar();
+                        }
+
+                        if (bookExists == 0)
+                        {
+                            throw new Exception("Book already exists.");
+                        }
+
                         string query = @"INSERT INTO Books (Year, Description, Title, Image, Source, Lent) 
                                          OUTPUT INSERTED.ID_Book
                                          VALUES (@Year, @Description, @Title, @Image, @Source, @Lent)";
@@ -136,38 +149,6 @@ namespace HomeLibrary.Repositories
                             }
                         }
 
-                        //if (book.GenreIds != null)
-                        //{
-                        //    for (int i = 0; i < book.GenreIds.Count; i++)
-                        //    {
-                        //        string checkGenreQuery = "SELECT COUNT(1) FROM Genres WHERE ID_Genre = @GenreId";
-                        //        using (SqlCommand checkGenreCmd = new(checkGenreQuery, conn, transaction))
-                        //        {
-                        //            checkGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
-                        //            int genreExists = (int)checkGenreCmd.ExecuteScalar();
-
-                        //            if (genreExists == 0)
-                        //            {
-                        //                string insertGenreQuery = "SET IDENTITY_INSERT Genres ON INSERT INTO Genres (ID_Genre, Name) VALUES (@GenreId, @Name)";
-                        //                using (SqlCommand insertGenreCmd = new(insertGenreQuery, conn, transaction))
-                        //                {
-                        //                    insertGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
-                        //                    insertGenreCmd.Parameters.AddWithValue("@Name", genres[i].Name);
-                        //                    insertGenreCmd.ExecuteNonQuery();
-                        //                }
-                        //            }
-                        //        }
-
-                        //        string genreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@BookId, @GenreId)";
-                        //        using (SqlCommand genreCmd = new(genreQuery, conn, transaction))
-                        //        {
-                        //            genreCmd.Parameters.AddWithValue("@BookId", book.Id);
-                        //            genreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
-                        //            genreCmd.ExecuteNonQuery();
-                        //        }
-                        //    }
-                        //}
-
                         transaction.Commit();
                         return true;
                     }
@@ -179,11 +160,57 @@ namespace HomeLibrary.Repositories
                 }
             }
         }
-
-        public bool DeleteBook(Book book)
+        public bool DeleteBook(string bookTitle)
         {
-            throw new NotImplementedException();
+            using (SqlConnection conn = _dbConnection.GetConnection())
+            {
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        int bookId;
+
+                        string getBookIdQuery = "SELECT ID_Book FROM Books WHERE Name = @Name";
+                        using (SqlCommand getBookIdCmd = new(getBookIdQuery, conn, transaction))
+                        {
+                            getBookIdCmd.Parameters.AddWithValue("@Name", bookTitle);
+                            bookId = (int)getBookIdCmd.ExecuteScalar();
+                        }
+
+                        string deleteBookAuthorsQuery = "DELETE FROM Books_Authors WHERE ID_Book = @BookId";
+                        using (SqlCommand deleteBookAuthorsCmd = new(deleteBookAuthorsQuery, conn, transaction))
+                        {
+                            deleteBookAuthorsCmd.Parameters.AddWithValue("@BookId", bookId);
+                            deleteBookAuthorsCmd.ExecuteNonQuery();
+                        }
+
+                        string deleteBookGenresQuery = "DELETE FROM Books_Genres WHERE ID_Book = @BookId";
+                        using (SqlCommand deleteBookGenresCmd = new(deleteBookGenresQuery, conn, transaction))
+                        {
+                            deleteBookGenresCmd.Parameters.AddWithValue("@BookId", bookId);
+                            deleteBookGenresCmd.ExecuteNonQuery();
+                        }
+
+                        string deleteBookQuery = "DELETE FROM Books WHERE ID_Book = @BookId";
+                        using (SqlCommand deleteBookCmd = new(deleteBookQuery, conn, transaction))
+                        {
+                            deleteBookCmd.Parameters.AddWithValue("@BookId", bookId);
+                            deleteBookCmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                        return false;
+                    }
+                }
+            }
         }
+
 
         public Book ReadBook(int id)
         {

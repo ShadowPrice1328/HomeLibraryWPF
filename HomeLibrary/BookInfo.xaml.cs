@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HomeLibrary.Model;
+using HomeLibrary.Repositories;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +24,33 @@ namespace HomeLibrary
         public BookInfo()
         {
             InitializeComponent();
+        }
+
+        private void btnDeleteBook_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Are you sure?", "Confirm Delete", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                var bookRepository = new BookRepository();
+                var book = new Book { Title = lbAuthor.Name };
+
+                try
+                {
+                    if (bookRepository.DeleteBook(book.Title))
+                    {
+                        Close();
+
+                        MessageBox.Show("Book successfully removed!");
+
+                        Close();
+                        ListWindow listWindow = new ListWindow();
+                        listWindow.Show();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}");
+                }
+            }
         }
     }
 }

@@ -107,11 +107,18 @@ namespace HomeLibrary
                     Genres = genresList
                 };
 
-                repository.CreateBook(newBook);
+                if (repository.CreateBook(newBook))
+                {
+                    MessageBox.Show("Book added successfully!");
 
-                Close();
-                ListWindow listWindow = new();
-                listWindow.Show();
+                    Close();
+                    ListWindow listWindow = new();
+                    listWindow.Show();
+                }
+                else
+                {
+                    MessageBox.Show("An error occurred! Try again!");
+                }
 
             }
             catch (Exception ex)

@@ -43,6 +43,6 @@ namespace HomeLibrary.Interfaces
         /// </summary>
         /// <param name="book">Book to delete</param>
         /// <returns>True if success and False is error has occured</returns>
-        bool DeleteBook(Book book);
+        bool DeleteBook(string bookTitle);
     }
 }
