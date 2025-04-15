@@ -100,21 +100,27 @@
                Name="tbBookName"></TextBox>
 
         <Border Grid.Row="1" Grid.RowSpan="6"
-                Grid.Column="1"
-                Style="{StaticResource BasicBorder}">
-            <Image></Image>
+            Grid.Column="1"
+            Style="{StaticResource BasicBorder}"
+            Name="ImageBorder"
+            Cursor="Hand"
+            MouseLeftButtonDown="ChooseImage_Click">
+            <Image Name="SelectedImage" Stretch="Uniform" />
         </Border>
-        
+
+
         <Label Content="Click to upload"
-                Grid.Row="1" 
-                Grid.RowSpan="6"
-                Grid.Column="1"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Cursor="Hand"
+               Grid.Row="1" 
+               Grid.RowSpan="6"
+               Grid.Column="1"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Cursor="Hand"
+               MouseLeftButtonDown="ChooseImage_Click"
+               Visibility="{Binding ElementName=SelectedImage, Path=Source}"
                Background="LightGray"
                BorderBrush="Black"
-               BorderThickness="0.5"></Label>
+               BorderThickness="0.5" /> 
 
 
         <Border Grid.Row="6" Grid.Column="2"
@@ -131,7 +137,7 @@
             <ListBoxItem Content="Gift"></ListBoxItem>
         </ListBox>
 
-        <CheckBox Grid.Row="0" Grid.Column="2"
+        <CheckBox x:Name="chbxLent" Grid.Row="0" Grid.Column="2"
                   Content="Lent"></CheckBox>
         <Label Grid.Row="2" Grid.Column="2"
                   Content="Author: "
@@ -161,17 +167,18 @@
         <Label Grid.Row="5" Grid.Column="2"
                   Content="Description:"
                Style="{StaticResource Property}"></Label>
-        <TextBox Grid.Row="6" Grid.Column="2"
+        <TextBox x:Name="tbBookDescription" Grid.Row="6" Grid.Column="2"
                  TextWrapping="Wrap"
                  Margin="5"></TextBox>
-        <Button Grid.Row="7" Grid.Column="1"
-                Content="Back">
+        <Button x:Name="btnBack" Grid.Row="7" Grid.Column="1"
+                Content="Back" Click="btnBack_Click">
         </Button>
         <Button Grid.Row="7" Grid.Column="2"
+                Name="btnAddBook"
                 Content="Add"
                 Background="DarkSeaGreen"
                 HorizontalAlignment="Right"
-                Margin="0 0 5 0" Click="Button_Click">
+                Margin="0 0 5 0" Click="btnAddBook_Click">
         </Button>
     </Grid>
 </Window>

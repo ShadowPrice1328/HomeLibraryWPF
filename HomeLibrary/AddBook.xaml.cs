@@ -1,7 +1,9 @@
 ﻿using HomeLibrary.Model;
 using HomeLibrary.Repositories;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,34 +23,140 @@ namespace HomeLibrary
     /// </summary>
     public partial class AddBook : Window
     {
+        private string userSelectedImagePath;
         public AddBook()
         {
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void ChooseImage_Click(object sender, MouseButtonEventArgs e)
         {
-            var repository = new BookRepository();
-
-            var newBook = new Book
+            OpenFileDialog openFileDialog = new OpenFileDialog
             {
-                Name = "The Great Gatsby",
-                Title = "Novel",
-                Year = 1925,
-                Description = "Classic novel",
-                Price = 19.99m,
-                Publisher = "Scribner",
-                Image = "book1.png",
-                IsLent = false,
-                Source = BookSource.Purchased,
-                AuthorIds = new List<int> { 1 }, // TODO: CONVERT AUTHOR NAME TO ID !!
-                GenreIds = new List<int> { 3 }     // TODO: CONVERT NAME OF GENRE TO GENRE ID !!
+                Title = "Select an image",
+                Filter = "Image files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png|All files (*.*)|*.*"
             };
 
-            List<Author> authors = new List<Author> { new Author() { FirstName = "Francis Scott", LastName = " Key Fitzgerald" } };
-            List<Genre> genres = new List<Genre> { new Genre() { Name = "Novel" } };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                userSelectedImagePath = openFileDialog.FileName;
 
-            repository.CreateBook(newBook, authors, genres);
+                var bitmap = new BitmapImage(new Uri(userSelectedImagePath));
+                SelectedImage.Source = bitmap;
+
+                var label = this.FindName("ClickToUploadLabel") as Label;
+                if (label != null)
+                {
+                    label.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void btnAddBook_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (string.IsNullOrEmpty(userSelectedImagePath))
+            {
+                MessageBox.Show("Please select an image before adding the book.");
+                return;
+            }
+
+            var repository = new BookRepository();
+
+            try
+            {
+                string imagePath = SaveImage(userSelectedImagePath);
+                string[] authors = tbxAuthor.Text.Split(';', StringSplitOptions.TrimEntries);
+
+                List<Author> authorList = [];
+
+                for (int i = 0; i < authors.Length; i++)
+                {
+                    string[] nameParts = authors[i].Split(' ', StringSplitOptions.TrimEntries);
+
+                    if (nameParts.Length >= 2)
+                    {
+                        string firstName = nameParts[0];
+                        string lastName = nameParts[1];
+
+                        authorList.Add(new Author { FirstName = firstName, LastName = lastName });
+                    }
+                    else
+                    {
+                        MessageBox.Show("Author format is incorrect. Make sure to input both first and last name.");
+                    }
+                }
+
+                string[] genres = tbxGenre.Text.Split(';', StringSplitOptions.TrimEntries);
+                List<Genre> genresList = [];
+
+                for (int i = 0; i < genres.Length; i++)
+                {
+                    genresList.Add(new Genre { Name = genres[i] });
+                }
+
+                var newBook = new Book
+                {
+                    Title = tbBookName.Text,
+                    Year = int.TryParse(tbxYear.Text, out int year) ? year : throw new FormatException("Year must be a number."),
+                    Description = tbBookDescription.Text,
+                    Image = imagePath,
+                    Source = (BookSource)lbxSource.SelectedItem,
+                    IsLent = (bool)chbxLent.IsChecked,
+                    Authors = authorList,
+                    Genres = genresList
+                };
+
+                repository.CreateBook(newBook);
+
+                Close();
+                ListWindow listWindow = new();
+                listWindow.Show();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+
+        }
+
+        private string SaveImage(string sourcePath)
+        {
+            if (string.IsNullOrEmpty(sourcePath))
+                return null;
+
+            try
+            {
+                string projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+
+                string serverPath = System.IO.Path.Combine(projectRoot, "Images");
+
+                if (!Directory.Exists(serverPath))
+                {
+                    Directory.CreateDirectory(serverPath);
+                }
+
+                string fileName = $"image_{Guid.NewGuid()}.jpg";
+
+                string destinationPath = System.IO.Path.Combine(serverPath, fileName);
+
+                File.Copy(sourcePath, destinationPath, true);
+
+                return System.IO.Path.Combine("Images", fileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving image: {ex.Message}");
+                return null;
+            }
+        }
+
+        private void btnBack_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+            ListWindow listWindow = new();
+            listWindow.Show();
         }
     }
 }

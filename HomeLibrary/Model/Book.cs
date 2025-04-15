@@ -12,18 +12,15 @@ namespace HomeLibrary.Model
     class Book
     {
         public int Id { get; set; }
-        public string? Name { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
         public int Year { get; set; }
-        public decimal Price { get; set; }
-        public string? Publisher { get; set; }
-        public string? Image { get; set; }
+        public string? Image { get; set; } // Path to image
         public bool IsLent {  get; set; }
         public BookSource Source { get; set; }
 
         // Many-to-Many
-        public List<int>? AuthorIds { get; set; }
-        public List<int>? GenreIds { get; set; }
+        public List<Author>? Authors { get; set; }
+        public List<Genre>? Genres { get; set; }
     }
 }

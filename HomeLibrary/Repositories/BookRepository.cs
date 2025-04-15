@@ -7,7 +7,7 @@ namespace HomeLibrary.Repositories
     class BookRepository : IBookRepository
     {
         private readonly DatabaseConnection _dbConnection = new();
-        public bool CreateBook(Book book, List<Author>? authors = null, List<Genre>? genres = null)
+        public bool CreateBook(Book book)
         {
             using (SqlConnection conn = _dbConnection.GetConnection())
             {
@@ -16,18 +16,16 @@ namespace HomeLibrary.Repositories
                 {
                     try
                     {
-                        string query = @"INSERT INTO Books (Name, Year, Description, Price, Publisher, Title, Image, Source, Lent) 
+                        // TO DO: prevent duplicates
+                        string query = @"INSERT INTO Books (Year, Description, Title, Image, Source, Lent) 
                                          OUTPUT INSERTED.ID_Book
-                                         VALUES (@Name, @Year, @Description, @Price, @Publisher, @Title, @Image, @Source, @Lent)";
+                                         VALUES (@Year, @Description, @Title, @Image, @Source, @Lent)";
                         using (SqlCommand cmd = new(query, conn, transaction))
                         {
-                            cmd.Parameters.AddWithValue("@Name", book.Name);
                             cmd.Parameters.AddWithValue("@Year", new DateTime(book.Year, 1, 1));
                             cmd.Parameters.AddWithValue("@Description", book.Description);
-                            cmd.Parameters.AddWithValue("@Price", book.Price);
-                            cmd.Parameters.AddWithValue("@Publisher", book.Publisher);
                             cmd.Parameters.AddWithValue("@Title", book.Title);
-                            cmd.Parameters.AddWithValue("@Image", book.Image);
+                            cmd.Parameters.AddWithValue("@Image", book.Image); // Path to image
                             cmd.Parameters.AddWithValue("@Source", book.Source);
                             cmd.Parameters.AddWithValue("@Lent", book.IsLent);
 
@@ -35,70 +33,140 @@ namespace HomeLibrary.Repositories
                         }
 
 
-                        if (book.AuthorIds != null)
+                        if (book.Authors != null)
                         {
-                            for (int i = 0; i < book.AuthorIds.Count; i++)
+                            for (int i = 0; i < book.Authors.Count; i++)
                             {
-                                string checkAuthorQuery = "SELECT COUNT(1) FROM Authors WHERE ID_Author = @AuthorId";
+                                string checkAuthorQuery = "SELECT COUNT(1) FROM Authors WHERE FirstName = @AuthorId AND LastName = @LastName";
                                 using (SqlCommand checkAuthorCmd = new(checkAuthorQuery, conn, transaction))
                                 {
-                                    checkAuthorCmd.Parameters.AddWithValue("@AuthorId", book.AuthorIds[i]);
+                                    checkAuthorCmd.Parameters.AddWithValue("@FirstName", book.Authors[i].FirstName);
+                                    checkAuthorCmd.Parameters.AddWithValue("@LastName", book.Authors[i].LastName);
+
                                     int authorExists = (int)checkAuthorCmd.ExecuteScalar();
+                                    int authorId;
 
                                     if (authorExists == 0)
                                     {
-                                        string insertAuthorQuery = "SET IDENTITY_INSERT Authors ON INSERT INTO Authors (ID_Author, FirstName, LastName) VALUES (@AuthorId, @FirstName, @LastName)";
+                                        string insertAuthorQuery = "SET IDENTITY_INSERT Authors ON INSERT INTO Authors (FirstName, LastName) " +
+                                            "OUTPUT INSERTED.ID_Author" +
+                                            "VALUES (@FirstName, @LastName)";
+
                                         using (SqlCommand insertAuthorCmd = new(insertAuthorQuery, conn, transaction))
                                         {
-                                            insertAuthorCmd.Parameters.AddWithValue("@AuthorId", book.AuthorIds[i]);
-                                            insertAuthorCmd.Parameters.AddWithValue("@FirstName", authors[i].FirstName);
-                                            insertAuthorCmd.Parameters.AddWithValue("@LastName", authors[i].LastName);
-                                            insertAuthorCmd.ExecuteNonQuery();
+                                            insertAuthorCmd.Parameters.AddWithValue("@FirstName", book.Authors[i].FirstName);
+                                            insertAuthorCmd.Parameters.AddWithValue("@LastName", book.Authors[i].LastName);
+
+                                            authorId = (int)insertAuthorCmd.ExecuteScalar();                                      
                                         }
                                     }
-                                }
+                                    else
+                                    {
+                                        string getAuthorIdQuery = "SELECT ID_Author FROM Authors WHERE FirstName = @FirstName AND LastName = @LastName";
 
-                                string authorQuery = "INSERT INTO Books_Authors (ID_Book, ID_Author) VALUES (@BookId, @AuthorId)";
-                                using (SqlCommand authorCmd = new(authorQuery, conn, transaction))
-                                {
-                                    authorCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    authorCmd.Parameters.AddWithValue("@AuthorId", book.AuthorIds[i]);
-                                    authorCmd.ExecuteNonQuery();
+                                        using (SqlCommand getAuthorIdCmd = new(getAuthorIdQuery, conn, transaction))
+                                        {
+                                            getAuthorIdCmd.Parameters.AddWithValue("@FirstName", book.Authors[i].FirstName);
+                                            getAuthorIdCmd.Parameters.AddWithValue("@LastName", book.Authors[i].LastName);
+
+                                            authorId = (int)getAuthorIdCmd.ExecuteScalar();
+                                        }
+                                    }
+
+                                    string bookAuthorQuery = "INSERT INTO Books_Authors (ID_Book, ID_Author) VALUES (@BookId, @AuthorId)";
+
+                                    using (SqlCommand bookAuthorCmd = new(bookAuthorQuery, conn, transaction))
+                                    {
+                                        bookAuthorCmd.Parameters.AddWithValue("@BookId", book.Id);
+                                        bookAuthorCmd.Parameters.AddWithValue("@AuthorId", authorId);
+
+                                        bookAuthorCmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
                         }
 
-                        if (book.GenreIds != null)
+                        if (book.Genres != null)
                         {
-                            for (int i = 0; i < book.GenreIds.Count; i++)
+                            for (int i = 0; i < book.Genres.Count; i++)
                             {
-                                string checkGenreQuery = "SELECT COUNT(1) FROM Genres WHERE ID_Genre = @GenreId";
+                                string checkGenreQuery = "SELECT COUNT(1) FROM Genre WHERE Name = @Name";
                                 using (SqlCommand checkGenreCmd = new(checkGenreQuery, conn, transaction))
                                 {
-                                    checkGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
+                                    checkGenreCmd.Parameters.AddWithValue("@Name", book.Genres[i].Name);
+
                                     int genreExists = (int)checkGenreCmd.ExecuteScalar();
+                                    int genreId;
 
                                     if (genreExists == 0)
                                     {
-                                        string insertGenreQuery = "SET IDENTITY_INSERT Genres ON INSERT INTO Genres (ID_Genre, Name) VALUES (@GenreId, @Name)";
+                                        string insertGenreQuery = "SET IDENTITY_INSERT Genres ON INSERT INTO Genres (Name) " +
+                                            "OUTPUT INSERTED.ID_Genre" +
+                                            "VALUES (@Name)";
+
                                         using (SqlCommand insertGenreCmd = new(insertGenreQuery, conn, transaction))
                                         {
-                                            insertGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
-                                            insertGenreCmd.Parameters.AddWithValue("@Name", genres[i].Name);
-                                            insertGenreCmd.ExecuteNonQuery();
+                                            insertGenreCmd.Parameters.AddWithValue("@Name", book.Genres[i].Name);
+
+                                            genreId = (int)insertGenreCmd.ExecuteScalar();
                                         }
                                     }
-                                }
+                                    else
+                                    {
+                                        string getGenreIdQuery = "SELECT ID_Genre FROM Genres WHERE Name = @Name";
 
-                                string genreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@BookId, @GenreId)";
-                                using (SqlCommand genreCmd = new(genreQuery, conn, transaction))
-                                {
-                                    genreCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    genreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
-                                    genreCmd.ExecuteNonQuery();
+                                        using (SqlCommand getGenreIdCmd = new(getGenreIdQuery, conn, transaction))
+                                        {
+                                            getGenreIdCmd.Parameters.AddWithValue("@Name", book.Genres[i].Name);
+
+                                            genreId = (int)getGenreIdCmd.ExecuteScalar();
+                                        }
+                                    }
+
+                                    string bookGenreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@ID_Book, @ID_Genre)";
+
+                                    using (SqlCommand bookGenreCmd = new(bookGenreQuery, conn, transaction))
+                                    {
+                                        bookGenreCmd.Parameters.AddWithValue("@ID_Book", book.Id);
+                                        bookGenreCmd.Parameters.AddWithValue("@ID_Genre", genreId);
+
+                                        bookGenreCmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
                         }
+
+                        //if (book.GenreIds != null)
+                        //{
+                        //    for (int i = 0; i < book.GenreIds.Count; i++)
+                        //    {
+                        //        string checkGenreQuery = "SELECT COUNT(1) FROM Genres WHERE ID_Genre = @GenreId";
+                        //        using (SqlCommand checkGenreCmd = new(checkGenreQuery, conn, transaction))
+                        //        {
+                        //            checkGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
+                        //            int genreExists = (int)checkGenreCmd.ExecuteScalar();
+
+                        //            if (genreExists == 0)
+                        //            {
+                        //                string insertGenreQuery = "SET IDENTITY_INSERT Genres ON INSERT INTO Genres (ID_Genre, Name) VALUES (@GenreId, @Name)";
+                        //                using (SqlCommand insertGenreCmd = new(insertGenreQuery, conn, transaction))
+                        //                {
+                        //                    insertGenreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
+                        //                    insertGenreCmd.Parameters.AddWithValue("@Name", genres[i].Name);
+                        //                    insertGenreCmd.ExecuteNonQuery();
+                        //                }
+                        //            }
+                        //        }
+
+                        //        string genreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@BookId, @GenreId)";
+                        //        using (SqlCommand genreCmd = new(genreQuery, conn, transaction))
+                        //        {
+                        //            genreCmd.Parameters.AddWithValue("@BookId", book.Id);
+                        //            genreCmd.Parameters.AddWithValue("@GenreId", book.GenreIds[i]);
+                        //            genreCmd.ExecuteNonQuery();
+                        //        }
+                        //    }
+                        //}
 
                         transaction.Commit();
                         return true;

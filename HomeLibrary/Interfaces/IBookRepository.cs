@@ -16,7 +16,7 @@ namespace HomeLibrary.Interfaces
         /// </summary>
         /// <param name="book">Book to add</param>
         /// <returns>True if success and False is error has occured</returns>
-        bool CreateBook(Book book, List<Author>? authors = null, List<Genre>? genres = null);
+        bool CreateBook(Book book);
 
         /// <summary>
         /// Retrieves all books from database
