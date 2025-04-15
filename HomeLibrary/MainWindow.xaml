@@ -61,8 +61,8 @@
             <ColumnDefinition Width="0.3*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <Label Grid.Row="1" Grid.Column="1" 
-               Content="Welcome, Anna" 
+        <Label x:Name="lbWelcome" Grid.Row="1" Grid.Column="1" 
+               Content="Welcome, " 
                Style="{StaticResource ResourceKey=TitleText}"></Label>
         <Label Grid.Row="1" Grid.Column="1"
                HorizontalAlignment="Right"

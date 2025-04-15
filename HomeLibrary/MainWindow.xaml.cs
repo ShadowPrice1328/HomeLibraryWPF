@@ -18,19 +18,22 @@ namespace HomeLibrary
     /// </summary>
     public partial class MainWindow : Window
     {
+        private string _userName = "Anna";
         public MainWindow()
         {
             InitializeComponent();
+
+            lbWelcome.Content += _userName;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             var repository = new BookRepository();
-            List<Book> books = repository.ReadBooks();
-            foreach (var book in books)
-            {
-                Console.WriteLine($"Book: {book.Title}, AuthorIds: {string.Join(",", book.AuthorIds)}");
-            }
+            //List<Book> books = repository.ReadBooks();
+            //foreach (var book in books)
+            //{
+            //    Console.WriteLine($"Book: {book.Title}, AuthorIds: {string.Join(",", book.AuthorIds)}");
+            //}
 
         }
     }

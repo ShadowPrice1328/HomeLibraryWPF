@@ -318,31 +318,29 @@ namespace HomeLibrary.Repositories
         }
         public List<Book> ReadBooks()
         {
-            List<Book> books = [];
+            List<Book> books = new();
 
             using (SqlConnection conn = _dbConnection.GetConnection())
             {
                 conn.Open();
+
                 string query = "SELECT * FROM Books";
                 using (SqlCommand cmd = new(query, conn))
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        Book book = new Book
+                        Book book = new()
                         {
                             Id = reader.GetInt32(0),
-                            Name = reader.GetString(1),
-                            Year = reader.GetDateTime(2).Year,
-                            Description = reader.GetString(3),
-                            Price = reader.GetDecimal(4),
-                            Publisher = reader.GetString(5),
-                            Title = reader.GetString(6),
-                            Image = reader.GetString(7),
-                            Source = (BookSource)reader.GetInt32(8),
-                            IsLent = reader.GetBoolean(9),
-                            AuthorIds = new List<int>(),
-                            GenreIds = new List<int>()
+                            Year = reader.GetDateTime(1).Year,
+                            Description = reader.GetString(2),
+                            Title = reader.GetString(3),
+                            Image = reader.GetString(4),
+                            Source = (BookSource)reader.GetInt32(5),
+                            IsLent = reader.GetBoolean(6),
+                            Authors = [],
+                            Genres = []
                         };
                         books.Add(book);
                     }
@@ -351,10 +349,11 @@ namespace HomeLibrary.Repositories
                 foreach (var book in books)
                 {
                     string authorQuery = @"
-                SELECT A.ID_Author, A.FirstName, A.LastName 
-                FROM Authors A
-                JOIN Books_Authors BA ON A.ID_Author = BA.ID_Author
-                WHERE BA.ID_Author = @BookId";
+                        SELECT A.ID_Author, A.FirstName, A.LastName 
+                        FROM Authors A
+                        JOIN Books_Authors BA ON A.ID_Author = BA.ID_Author
+                        WHERE BA.ID_Book = @BookId";
+
                     using (SqlCommand authorCmd = new(authorQuery, conn))
                     {
                         authorCmd.Parameters.AddWithValue("@BookId", book.Id);
@@ -362,16 +361,22 @@ namespace HomeLibrary.Repositories
                         {
                             while (authorReader.Read())
                             {
-                                book.AuthorIds.Add(authorReader.GetInt32(0));
+                                book.Authors.Add(new Author
+                                {
+                                    Id = authorReader.GetInt32(0),
+                                    FirstName = authorReader.GetString(1),
+                                    LastName = authorReader.GetString(2)
+                                });
                             }
                         }
                     }
 
                     string genreQuery = @"
-                SELECT G.Id, G.Name 
-                FROM Genres G
-                JOIN Books_Genres BG ON G.ID_Genre = BG.ID_Genre
-                WHERE BG.ID_Book = @BookId";
+                        SELECT G.ID_Genre, G.Name 
+                        FROM Genres G
+                        JOIN Books_Genres BG ON G.ID_Genre = BG.ID_Genre
+                        WHERE BG.ID_Book = @BookId";
+
                     using (SqlCommand genreCmd = new(genreQuery, conn))
                     {
                         genreCmd.Parameters.AddWithValue("@BookId", book.Id);
@@ -379,12 +384,17 @@ namespace HomeLibrary.Repositories
                         {
                             while (genreReader.Read())
                             {
-                                book.GenreIds.Add(genreReader.GetInt32(0));
+                                book.Genres.Add(new Genre
+                                {
+                                    Id = genreReader.GetInt32(0),
+                                    Name = genreReader.GetString(1)
+                                });
                             }
                         }
                     }
                 }
             }
+
             return books;
         }
 
@@ -398,19 +408,15 @@ namespace HomeLibrary.Repositories
                     try
                     {
                         string query = @"UPDATE Books 
-                                 SET Name = @Name, Year = @Year, Description = @Description, 
-                                     Price = @Price, Publisher = @Publisher, Title = @Title, 
+                                 SET Title = @Title, Year = @Year, Description = @Description,  
                                      Image = @Image, Source = @Source, Lent = @Lent
-                                 WHERE Id = @Id";
+                                 WHERE ID_Book = @Id";
                         using (SqlCommand cmd = new(query, conn, transaction))
                         {
                             cmd.Parameters.AddWithValue("@Id", book.Id);
-                            cmd.Parameters.AddWithValue("@Name", book.Name);
+                            cmd.Parameters.AddWithValue("@Title", book.Title);
                             cmd.Parameters.AddWithValue("@Year", book.Year);
                             cmd.Parameters.AddWithValue("@Description", book.Description);
-                            cmd.Parameters.AddWithValue("@Price", book.Price);
-                            cmd.Parameters.AddWithValue("@Publisher", book.Publisher);
-                            cmd.Parameters.AddWithValue("@Title", book.Title);
                             cmd.Parameters.AddWithValue("@Image", book.Image);
                             cmd.Parameters.AddWithValue("@Source", book.Source);
                             cmd.Parameters.AddWithValue("@Lent", book.IsLent);
@@ -432,29 +438,29 @@ namespace HomeLibrary.Repositories
                             deleteGenreCmd.ExecuteNonQuery();
                         }
 
-                        if (book.AuthorIds != null)
+                        if (book.Authors != null && book.Authors.Count > 0)
                         {
-                            foreach (int authorId in book.AuthorIds)
+                            foreach (var author in book.Authors)
                             {
                                 string authorQuery = "INSERT INTO Books_Authors (ID_Book, ID_Author) VALUES (@BookId, @AuthorId)";
                                 using (SqlCommand authorCmd = new(authorQuery, conn, transaction))
                                 {
                                     authorCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    authorCmd.Parameters.AddWithValue("@AuthorId", authorId);
+                                    authorCmd.Parameters.AddWithValue("@AuthorId", author.Id);
                                     authorCmd.ExecuteNonQuery();
                                 }
                             }
                         }
 
-                        if (book.GenreIds != null)
+                        if (book.Genres != null && book.Genres.Count > 0)
                         {
-                            foreach (int genreId in book.GenreIds)
+                            foreach (var genre in book.Genres)
                             {
                                 string genreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@BookId, @GenreId)";
                                 using (SqlCommand genreCmd = new(genreQuery, conn, transaction))
                                 {
                                     genreCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    genreCmd.Parameters.AddWithValue("@GenreId", genreId);
+                                    genreCmd.Parameters.AddWithValue("@GenreId", genre.Id);
                                     genreCmd.ExecuteNonQuery();
                                 }
                             }
@@ -463,7 +469,7 @@ namespace HomeLibrary.Repositories
                         transaction.Commit();
                         return true;
                     }
-                    catch
+                    catch (Exception)
                     {
                         transaction.Rollback();
                         return false;
