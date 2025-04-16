@@ -91,37 +91,45 @@
                  Name="tbSearch"
                  Style="{StaticResource Search}"
                  Text="Search..."
-                 Background="Transparent">
-        </TextBox>
+                 Background="Transparent" GotFocus="tbSearch_GotFocus"/>
         <Expander Grid.Row="2" Grid.Column="2" Grid.RowSpan="2"
               Header="Sort by"
               Name="expSortBy"
               Style="{StaticResource SortBy}"
-              Panel.ZIndex="2">
+              Panel.ZIndex="0" Expanded="expSortBy_Expanded" Collapsed="expSortBy_Collapsed">
             <StackPanel>
-                <RadioButton GroupName="SortOptions" Content="Name" IsChecked="True"/>
-                <RadioButton GroupName="SortOptions" Content="Author"/>
-                <RadioButton GroupName="SortOptions" Content="Genre"/>
-                <RadioButton GroupName="SortOptions" Content="Year"/>
+                <RadioButton GroupName="SortOptions" Content="Title" Checked="SortOption_Checked"/>
+                <RadioButton GroupName="SortOptions" Content="Author" Checked="SortOption_Checked"/>
+                <RadioButton GroupName="SortOptions" Content="Genre" Checked="SortOption_Checked"/>
+                <RadioButton GroupName="SortOptions" Content="Year" Checked="SortOption_Checked"/>
             </StackPanel>
         </Expander>
         <CheckBox Grid.Row="2" Grid.Column="3"
                   Name="chbShowLent"
                   IsChecked="True"
                   Content="Show lent books"
-                  Style="{StaticResource basicCheckbox}">
+                  Style="{StaticResource basicCheckbox}" Checked="chbShowLent_Checked" Unchecked="chbShowLent_Unchecked">
         </CheckBox>
         <ScrollViewer Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" HorizontalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="BooksControl" HorizontalAlignment="Center">
+            <ItemsControl x:Name="BooksControl" HorizontalAlignment="Left">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource ResourceKey=BasicBorder}">
-                            <Viewbox Stretch="Uniform">
-                                <Image Width="75" Height="75" MaxWidth="60" MaxHeight="150" Source="{Binding ImageSource}"/>
-                            </Viewbox>
+                            <!-- Wrap the image in an Image control -->
+                            <Image MaxWidth="100"
+                   Source="{Binding Image}"
+                   Stretch="Uniform"
+                   MouseLeftButtonDown="BookImage_OnClick" />
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
+
             </ItemsControl>
         </ScrollViewer>
         <Border Grid.Row="3"

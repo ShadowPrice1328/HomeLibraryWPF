@@ -25,21 +25,21 @@ namespace HomeLibrary.Interfaces
         List<Book> ReadBooks();
 
         /// <summary>
-        /// Retrieves desired book from database
+        /// Retrieves desired _book from database
         /// </summary>
-        /// <param name="id">Id of desired book</param>
+        /// <param name="id">Id of desired _book</param>
         /// <returns>Book item</returns>
         Book ReadBook(int id);
 
         /// <summary>
-        /// Updates book in database
+        /// Updates _book in database
         /// </summary>
         /// <param name="book">Book to update</param>
         /// <returns>True if success and False is error has occured</returns>
         bool UpdateBook(Book book);
 
         /// <summary>
-        /// Removes book from database
+        /// Removes _book from database
         /// </summary>
         /// <param name="book">Book to delete</param>
         /// <returns>True if success and False is error has occured</returns>

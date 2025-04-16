@@ -89,7 +89,7 @@
         <Border Grid.Row="1" Grid.RowSpan="6"
                 Grid.Column="1"
                 Style="{StaticResource BasicBorder}">
-            <Image Stretch="UniformToFill"></Image>
+            <Image x:Name="imgImage" Stretch="UniformToFill"></Image>
         </Border>
 
         <Border Grid.Row="6" Grid.Column="2"

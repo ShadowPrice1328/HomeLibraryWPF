@@ -19,9 +19,30 @@ namespace HomeLibrary
     {
         private string userSelectedImagePath;
 
-        public UpdateBook()
+        public UpdateBook(Book book)
         {
             InitializeComponent();
+
+            userSelectedImagePath = book.Image;
+
+
+            tbBookName.Text = book.Title;
+            chbxLent.IsChecked = book.IsLent;
+            lbxSource.SelectedItem = book.Source;
+            tbxAuthor.Text = string.Join("; ", book.Authors.Select(a => $"{a.FirstName} {a.LastName}"));
+            tbxGenre.Text = string.Join("; ", book.Genres.Select(g => g.Name));
+            tbxYear.Text = book.Year.ToString();
+            tbBookDescription.Text = book.Description;
+
+            if (!string.IsNullOrEmpty(book.Image) && File.Exists(book.Image))
+            {
+                var imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, book.Image);
+                SelectedImage.Source = new BitmapImage(new Uri(imagePath, UriKind.Absolute));
+            }
+            else
+            {
+                MessageBox.Show("Image file not found. No image will be shown.");
+            }
         }
 
         private void ChooseImage_Click(object sender, MouseButtonEventArgs e)
@@ -38,33 +59,46 @@ namespace HomeLibrary
 
                 var bitmap = new BitmapImage(new Uri(userSelectedImagePath));
                 SelectedImage.Source = bitmap;
-
-                if (this.FindName("ClickToUpdateLabel") is Label label)
-                {
-                    label.Visibility = Visibility.Collapsed;
-                }
             }
         }
 
         private bool UpdateImage(string oldImagePath, string newImagePath)
         {
+            // First, we ensure that the old image is not in use.
+            if (SelectedImage.Source is BitmapImage oldBitmapImage)
+            {
+                oldBitmapImage?.StreamSource?.Dispose();
+            }
+
+            // Now, attempt to delete the old image if it exists
             if (File.Exists(oldImagePath))
             {
-                string oldImageHash = CalculateFileHash(oldImagePath);
-                string newImageHash = CalculateFileHash(newImagePath);
-
-                if (oldImageHash == newImageHash)
+                try
                 {
-                    Console.WriteLine("Images are identical. No update needed...");
+                    // Check if the new image is identical to the old one
+                    string oldImageHash = CalculateFileHash(oldImagePath);
+                    string newImageHash = CalculateFileHash(newImagePath);
+
+                    // Skip deletion if the images are identical
+                    if (oldImageHash == newImageHash)
+                    {
+                        Console.WriteLine("Images are identical. No update needed...");
+                        return false;
+                    }
+
+                    // Try to delete the old image file
+                    File.Delete(oldImagePath);
+                    Console.WriteLine("Old image deleted successfully.");
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show($"Failed to delete the old image. It might be in use by another process: {ex.Message}");
                     return false;
                 }
-
-                File.Delete(oldImagePath);
             }
 
             return true;
         }
-
         private string CalculateFileHash(string filePath)
         {
             using (var sha256 = SHA256.Create())
@@ -74,7 +108,6 @@ namespace HomeLibrary
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
         }
-
         private string SaveImage(string sourcePath, int bookId)
         {
             if (string.IsNullOrEmpty(sourcePath))
@@ -104,14 +137,39 @@ namespace HomeLibrary
                     return existingBook.Image;
                 }
 
-                File.Copy(sourcePath, destinationPath, true);
-                return Path.Combine("Images", fileName);
+                // Retry logic for file copying (e.g., handle if the file is locked by another process)
+                const int maxRetries = 3;
+                int attempts = 0;
+                while (attempts < maxRetries)
+                {
+                    try
+                    {
+                        File.Copy(sourcePath, destinationPath, true);
+                        return Path.Combine("Images", fileName);
+                    }
+                    catch (IOException ex)
+                    {
+                        attempts++;
+                        if (attempts >= maxRetries)
+                        {
+                            MessageBox.Show($"Error copying image: {ex.Message}. Please try again later.");
+                            return null;
+                        }
+                        else
+                        {
+                            // Wait a short time and try again if the file is locked
+                            System.Threading.Thread.Sleep(500);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving image: {ex.Message}");
                 return null;
             }
+
+            return null;
         }
 
         private void btnRemoveBook_Click(object sender, RoutedEventArgs e)
@@ -177,11 +235,14 @@ namespace HomeLibrary
 
                 var newBook = new Book
                 {
+                    Id = bookId,
                     Title = tbBookName.Text,
                     Year = int.TryParse(tbxYear.Text, out int year) ? year : throw new FormatException("Year must be a valid number."),
                     Description = tbBookDescription.Text,
                     Image = imagePath,
-                    Source = (BookSource)lbxSource.SelectedItem,
+                    Source = Enum.TryParse<BookSource>(lbxSource.SelectedItem?.ToString(), out var source)
+                    ? source
+                    : BookSource.Purchased,
                     IsLent = chbxLent.IsChecked ?? false,
                     Authors = authors,
                     Genres = genres

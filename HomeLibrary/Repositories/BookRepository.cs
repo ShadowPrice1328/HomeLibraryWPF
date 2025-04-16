@@ -324,7 +324,7 @@ namespace HomeLibrary.Repositories
             using (SqlConnection conn = _dbConnection.GetConnection())
             {
                 conn.Open();
-                string query = "SELECT ID_Book FROM Books WHERE Name = @Title AND Description = @Description";
+                string query = "SELECT ID_Book FROM Books WHERE Title = @Title AND CAST(Description AS NVARCHAR(MAX)) = @Description";
                 using (SqlCommand cmd = new(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Title", bookTitle);
@@ -357,7 +357,7 @@ namespace HomeLibrary.Repositories
                                 Description = reader.GetString(2),
                                 Title = reader.GetString(3),
                                 Image = reader.GetString(4),
-                                Source = (BookSource)reader.GetInt32(5),
+                                Source = Enum.Parse<BookSource>(reader.GetString(5)),
                                 IsLent = reader.GetBoolean(6)
                             };
                         }
@@ -443,7 +443,7 @@ namespace HomeLibrary.Repositories
                             Description = reader.GetString(2),
                             Title = reader.GetString(3),
                             Image = reader.GetString(4),
-                            Source = (BookSource)reader.GetInt32(5),
+                            Source = Enum.Parse<BookSource>(reader.GetString(5)),
                             IsLent = reader.GetBoolean(6),
                             Authors = [],
                             Genres = []
@@ -513,6 +513,7 @@ namespace HomeLibrary.Repositories
                 {
                     try
                     {
+                        // Оновлення основних даних книги
                         string query = @"UPDATE Books 
                                  SET Title = @Title, Year = @Year, Description = @Description,  
                                      Image = @Image, Source = @Source, Lent = @Lent
@@ -521,7 +522,7 @@ namespace HomeLibrary.Repositories
                         {
                             cmd.Parameters.AddWithValue("@Id", book.Id);
                             cmd.Parameters.AddWithValue("@Title", book.Title);
-                            cmd.Parameters.AddWithValue("@Year", book.Year);
+                            cmd.Parameters.AddWithValue("@Year", new DateTime(book.Year, 1, 1));  // Перетворення року в DateTime
                             cmd.Parameters.AddWithValue("@Description", book.Description);
                             cmd.Parameters.AddWithValue("@Image", book.Image);
                             cmd.Parameters.AddWithValue("@Source", book.Source);
@@ -530,6 +531,7 @@ namespace HomeLibrary.Repositories
                             cmd.ExecuteNonQuery();
                         }
 
+                        // Видалення старих авторів і жанрів для книги
                         string deleteAuthorsQuery = "DELETE FROM Books_Authors WHERE ID_Book = @BookId";
                         using (SqlCommand deleteAuthorCmd = new(deleteAuthorsQuery, conn, transaction))
                         {
@@ -544,39 +546,120 @@ namespace HomeLibrary.Repositories
                             deleteGenreCmd.ExecuteNonQuery();
                         }
 
+                        // Додавання авторів
                         if (book.Authors != null && book.Authors.Count > 0)
                         {
                             foreach (var author in book.Authors)
                             {
+                                // Перевірка, чи існує автор в базі
+                                string checkAuthorQuery = "SELECT COUNT(*) FROM Authors WHERE FirstName = @FirstName AND LastName = @LastName";
+                                int authorCount;
+
+                                using (SqlCommand checkAuthorCmd = new(checkAuthorQuery, conn, transaction))
+                                {
+                                    checkAuthorCmd.Parameters.AddWithValue("@FirstName", author.FirstName);
+                                    checkAuthorCmd.Parameters.AddWithValue("@LastName", author.LastName);
+                                    authorCount = (int)checkAuthorCmd.ExecuteScalar();
+                                }
+
+                                int authorId;
+                                if (authorCount == 0)
+                                {
+                                    // Якщо автора немає в базі, вставляємо його
+                                    string insertAuthorQuery = @"
+                                INSERT INTO Authors (FirstName, LastName)
+                                VALUES (@FirstName, @LastName);
+                                SELECT SCOPE_IDENTITY();";  // Отримуємо новий ID автора
+
+                                    using (SqlCommand insertAuthorCmd = new(insertAuthorQuery, conn, transaction))
+                                    {
+                                        insertAuthorCmd.Parameters.AddWithValue("@FirstName", author.FirstName);
+                                        insertAuthorCmd.Parameters.AddWithValue("@LastName", author.LastName);
+                                        authorId = Convert.ToInt32(insertAuthorCmd.ExecuteScalar());  // Отримуємо ID новоствореного автора
+                                    }
+                                }
+                                else
+                                {
+                                    // Якщо автор вже існує, отримуємо його ID
+                                    string getAuthorIdQuery = "SELECT ID_Author FROM Authors WHERE FirstName = @FirstName AND LastName = @LastName";
+                                    using (SqlCommand getAuthorIdCmd = new(getAuthorIdQuery, conn, transaction))
+                                    {
+                                        getAuthorIdCmd.Parameters.AddWithValue("@FirstName", author.FirstName);
+                                        getAuthorIdCmd.Parameters.AddWithValue("@LastName", author.LastName);
+                                        authorId = (int)getAuthorIdCmd.ExecuteScalar();
+                                    }
+                                }
+
+                                // Вставка зв'язку між книгою і автором
                                 string authorQuery = "INSERT INTO Books_Authors (ID_Book, ID_Author) VALUES (@BookId, @AuthorId)";
                                 using (SqlCommand authorCmd = new(authorQuery, conn, transaction))
                                 {
                                     authorCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    authorCmd.Parameters.AddWithValue("@AuthorId", author.Id);
+                                    authorCmd.Parameters.AddWithValue("@AuthorId", authorId);
                                     authorCmd.ExecuteNonQuery();
                                 }
                             }
                         }
 
+                        // Додавання жанрів
                         if (book.Genres != null && book.Genres.Count > 0)
                         {
                             foreach (var genre in book.Genres)
                             {
+                                // Перевірка чи існує жанр в базі
+                                string checkGenreQuery = "SELECT COUNT(*) FROM Genres WHERE Name = @GenreName";
+                                int genreCount;
+
+                                using (SqlCommand checkGenreCmd = new(checkGenreQuery, conn, transaction))
+                                {
+                                    checkGenreCmd.Parameters.AddWithValue("@GenreName", genre.Name);
+                                    genreCount = (int)checkGenreCmd.ExecuteScalar();
+                                }
+
+                                int genreId;
+                                if (genreCount == 0)
+                                {
+                                    // Якщо жанру немає в базі, вставляємо його
+                                    string insertGenreQuery = @"
+                                        INSERT INTO Genres (Name)
+                                        VALUES (@GenreName);
+                                        SELECT SCOPE_IDENTITY();";  // Отримуємо новий ID жанру
+
+                                    using (SqlCommand insertGenreCmd = new(insertGenreQuery, conn, transaction))
+                                    {
+                                        insertGenreCmd.Parameters.AddWithValue("@GenreName", genre.Name);
+                                        genreId = Convert.ToInt32(insertGenreCmd.ExecuteScalar());  // Отримуємо ID новоствореного жанру
+                                    }
+                                }
+                                else
+                                {
+                                    // Якщо жанр вже існує, отримуємо його ID
+                                    string getGenreIdQuery = "SELECT ID_Genre FROM Genres WHERE Name = @GenreName";
+                                    using (SqlCommand getGenreIdCmd = new(getGenreIdQuery, conn, transaction))
+                                    {
+                                        getGenreIdCmd.Parameters.AddWithValue("@GenreName", genre.Name);
+                                        genreId = (int)getGenreIdCmd.ExecuteScalar();
+                                    }
+                                }
+
+                                // Вставка зв'язку між книгою і жанром
                                 string genreQuery = "INSERT INTO Books_Genres (ID_Book, ID_Genre) VALUES (@BookId, @GenreId)";
                                 using (SqlCommand genreCmd = new(genreQuery, conn, transaction))
                                 {
                                     genreCmd.Parameters.AddWithValue("@BookId", book.Id);
-                                    genreCmd.Parameters.AddWithValue("@GenreId", genre.Id);
+                                    genreCmd.Parameters.AddWithValue("@GenreId", genreId);
                                     genreCmd.ExecuteNonQuery();
                                 }
                             }
                         }
 
+                        // Підтвердження транзакції
                         transaction.Commit();
                         return true;
                     }
                     catch (Exception)
                     {
+                        // У разі помилки відкочується транзакція
                         transaction.Rollback();
                         return false;
                     }
